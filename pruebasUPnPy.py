@@ -1,5 +1,8 @@
 import upnpy
 from lxml import etree
+import xmltodict
+import json
+import requests
 if __name__== "__main__":
     #Añadimos el UPnP al xml
     UPnPXml=etree.Element("UPnP")
@@ -51,6 +54,20 @@ if __name__== "__main__":
     #escribimos en el archivo ./xmls/UPnP.xml el xml correspondiente al escaneo mediante el protocolo UPnP
     archivoXml=etree.ElementTree(UPnPXml)
     archivoXml.write("./xmls/UPnP.xml")
+    #converitmos el xml a json
+    jsonXml=etree.tostring(UPnPXml, encoding='utf8').decode('utf8')
+    #print(jsonXml)
+    #preparado para envio:
+    jsonToSend=json.dumps(xmltodict.parse(jsonXml))
+    print(jsonToSend)
+    print("----------------------------------------------------------------------------\n\n")
+    #especificamos método de envío, url, etc
+    url="http://localhost/ExploracionIoT/controlador.php"
+    response=requests.post(url, data=jsonToSend)
+    #mostramos el código de estado y la respuesta recibida
+    print(response.status_code)
+    print(response.text)
+
    
 
 
