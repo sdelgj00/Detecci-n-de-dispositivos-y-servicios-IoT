@@ -1,73 +1,66 @@
 import upnpy
-from lxml import etree
-import xmltodict
+
 import json
 import requests
-if __name__== "__main__":
-    #Añadimos el UPnP al xml
-    UPnPXml=etree.Element("UPnP")
-    upnp=upnpy.UPnP()
-    devices=upnp.discover()
-    #añadimos los dispositivos al xml
-    for device in devices:
-        deviceName=str(device)
-        deviceName=deviceName.replace("Device <","")
-        deviceName=deviceName.replace(">","")
-        deviceXml=etree.SubElement(UPnPXml,deviceName, IP=device.address[0], port=str(device.address[1]))
-        servicesXml=etree.SubElement(deviceXml,"services")
-        #añadimos los servicios de cada dispositivo al xml
-        for service in device.get_services():
-            #el proceso de hacer el split es para obtener el nombre y el id del servicio
-            serviceTXT=str(service)
-            dividedService=serviceTXT.split()
-            serviceXml=etree.SubElement(servicesXml,dividedService[1].replace("(","").replace(")",""),
-            ID=dividedService[2].replace("id=","").replace('"',"").replace(">",""),
-            SCPD=service.scpd_url, ControlUrl=service.control_url, EventUrl=service.event_sub_url,
-            BaseUrl=service.base_url)
-            actions=service.get_actions()
-            actionsXml=etree.SubElement(serviceXml, "actions")
-            #añadimos las acciones de cada servicio
-            for action in actions:
-                actionXml=etree.SubElement(actionsXml,action.name)
-                inputArgs=action.get_input_arguments()
-                outputArgs=action.get_output_arguments()
-                #añadimos los argumentos de entrada a la acción
-                inputArgsXml=etree.SubElement(actionXml, "input_args")
-                for inputArg in inputArgs:
-                    allowedVals=inputArg['allowed_value_list']
-                    allowedValsString=""
-                    for vals in allowedVals:
-                        allowedValsString+=","+vals
-                    allowedValsString=allowedValsString[1:len(allowedValsString)]
-                    inputArgXml=etree.SubElement(inputArgsXml,inputArg['name'], dataType=inputArg['data_type'],
-                    allowedValueList=allowedValsString)
-                #añadimos los argumentos de salida a la acción
-                outputArgsXml=etree.SubElement(actionXml, "output_args")
-                for outputArg in outputArgs:
-                    allowedVals=outputArg['allowed_value_list']
-                    allowedValsString=""
-                    for vals in allowedVals:
-                        allowedValsString+=","+vals
-                    allowedValsString=allowedValsString[1:len(allowedValsString)]
-                    outputArgXml=etree.SubElement(outputArgsXml,outputArg['name'], dataType=outputArg['data_type'],
-                    allowedValueList=allowedValsString)
-    #escribimos en el archivo ./xmls/UPnP.xml el xml correspondiente al escaneo mediante el protocolo UPnP
-    archivoXml=etree.ElementTree(UPnPXml)
-    archivoXml.write("./xmls/UPnP.xml")
-    #converitmos el xml a json
-    jsonXml=etree.tostring(UPnPXml, encoding='utf8').decode('utf8')
-    #print(jsonXml)
-    #preparado para envio:
-    jsonToSend=json.dumps(xmltodict.parse(jsonXml))
-    print(jsonToSend)
-    print("----------------------------------------------------------------------------\n\n")
-    #especificamos método de envío, url, etc
-    url="http://localhost/ExploracionIoT/controlador.php"
-    response=requests.post(url, data=jsonToSend)
-    #mostramos el código de estado y la respuesta recibida
-    print(response.status_code)
-    print(response.text)
 
-   
-
+#Añadimos el UPnP al dict
+DevicesDict={}
+UPnPDict={"UPnP": DevicesDict} 
+upnp=upnpy.UPnP()
+devices=upnp.discover()
+#añadimos los dispositivos al dict
+for device in devices:
+    deviceName=str(device)
+    deviceName=deviceName.replace("Device <","")
+    deviceName=deviceName.replace(">","")
+    ServicesDict={}
+    DevicesDict[deviceName]={"IP":device.address[0],"port":str(device.address[1]),"services":ServicesDict}
+    #añadimos los servicios de cada dispositivo al dict
+    for service in device.get_services():
+        #el proceso de hacer el split es para obtener el nombre y el id del servicio
+        serviceTXT=str(service)
+        dividedService=serviceTXT.split()
+        ActionsDict={}
+        ServicesDict[dividedService[1].replace("(","").replace(")","")]={"ID":dividedService[2].replace("id=","").replace('"',"").replace(">",""),
+        "SCPD":service.scpd_url, "ControlUrl":service.control_url, "EventUrl":service.event_sub_url, "BaseUrl":service.base_url, "actions":ActionsDict}
+        actions=service.get_actions()
+        #añadimos las acciones de cada servicio
+        for action in actions:
+            ActionsDict[action.name]={}                                     
+            inputArgs=action.get_input_arguments()
+            outputArgs=action.get_output_arguments()
+            #añadimos los argumentos de entrada a la acción
+            inputArgsDict={}
+            outputArgsDict={}
+            ActionsDict[action.name]["input_args"]=inputArgsDict
+            ActionsDict[action.name]["output_args"]=outputArgsDict
+            for inputArg in inputArgs:
+                allowedVals=inputArg['allowed_value_list']
+                allowedValsString=""
+                for vals in allowedVals:
+                    allowedValsString+=","+vals
+                allowedValsString=allowedValsString[1:len(allowedValsString)]
+                inputArgsDict[inputArg["name"]]={"dataType":inputArg['data_type'],"allowedValueList":allowedValsString}
+            #añadimos los argumentos de salida a la acción
+            for outputArg in outputArgs:
+                allowedVals=outputArg['allowed_value_list']
+                allowedValsString=""
+                for vals in allowedVals:
+                    allowedValsString+=","+vals
+                allowedValsString=allowedValsString[1:len(allowedValsString)]
+                outputArgsDict[outputArg["name"]]={"dataType":outputArg['data_type'],"allowedValueList":allowedValsString}
+                outputArgDict={"dataType":outputArg['data_type'],"allowedValueList":allowedValsString}
+                
+#preparado para envio:
+jsonToSend=json.dumps(UPnPDict)
+#guardamos en ./json/UPnP.json el json creado para hacer las pruebas de la aplicación
+with open("./jsons/UPnP.json","w") as f:
+    json.dump(UPnPDict, f,)
+print("----------------------------------------------------------------------------\n\n")
+#especificamos método de envío, url, etc
+url="http://localhost/ExploracionIoT/controlador.php"
+response=requests.post(url, data=jsonToSend)
+#mostramos el código de estado y la respuesta recibida
+print(response.status_code)
+print(response.text)
 
