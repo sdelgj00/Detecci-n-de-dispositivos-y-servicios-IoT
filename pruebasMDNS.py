@@ -5,6 +5,12 @@ import time
 import json
 import requests
 
+def enviar(j,peticion):
+    jsonToSend={"Peticion":peticion, "info":j}
+    jsonToSend=json.dumps(jsonToSend)
+    url="http://localhost/ExploracionIoT/controlador.php"
+    return requests.post(url, data=jsonToSend)
+
 class MyListener:
 
     def remove_service(self, zeroconf, type, name):
@@ -44,26 +50,60 @@ browser = ServiceBrowser(zeroconf,list(ZeroconfServiceTypes.find(zc=zeroconf)),l
 time.sleep(3)
 browser.cancel()
 print(arrayServicios)
-MDNSXml=etree.Element("mDNS")
 serviciosPorIPs={}
+mDNSDict={"mDNS":serviciosPorIPs}
 for servicio in arrayServicios:
     anyadido=False
+    properties={}
+    print(servicio.properties)
+    servicio.properties
+    for a in servicio.properties:
+        print("ii")
+        clave=str(a)
+        clave=clave[2:len(clave)-1]
+        print(a)
+        print(clave)
+        valor=str(servicio.properties[a])
+        valor=valor[2:len(valor)-1]
+        properties[clave]=valor
+        print(valor)
+    print("props")
+    print(properties)
     for ips in serviciosPorIPs:
         if ips==servicio.parsed_addresses()[0]:
             anyadido=True
-            ips.append(servicio)
-            break
+            
+            serv={"type":servicio.type,"port":servicio.port,
+            "weight":servicio.weight,"priority":servicio.priority,"server":servicio.server,"properties":properties,
+            "interface_index":servicio.interface_index}
+            serviciosPorIPs[ips][str(servicio.name)]=serv
+        break
+        print("xd")
     if not anyadido:
-        serviciosPorIPs[servicio.parsed_addresses()[0]]=[]
-        serviciosPorIPs[servicio.parsed_addresses()[0]].append(servicio)
+        serv={"type":servicio.type,"port":servicio.port,
+        "weight":servicio.weight,"priority":servicio.priority,"server":servicio.server,"properties":properties,
+        "interface_index":servicio.interface_index}
+        serviciosPorIPs[servicio.parsed_addresses()[0]]={str(servicio.name):serv}
+        
 print("dict:\n\n")
 print(serviciosPorIPs)
 for a in serviciosPorIPs:
     print(" "+str(a))
     for b in serviciosPorIPs[a]:
         print("     "+str(b))
-archivoXml=etree.ElementTree(MDNSXml)
-archivoXml.write("./xmls/mDNS.xml")
+
+#guardamos en ./json/UPnP.json el json creado para hacer las pruebas de la aplicación
+with open("./jsons/mDNS.json","w") as f:
+    json.dump(mDNSDict, f)
+print("----------------------------------------------------------------------------\n\n")
+#especificamos método de envío, url, etc
+response=enviar(mDNSDict,"mDNS")
+
+#mostramos el código de estado y la respuesta recibida
+print(response.status_code)
+print(response.text)
+
+
 #Falta la parte de enviar al json
 
 #Para cambiar las keys:

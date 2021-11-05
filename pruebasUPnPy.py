@@ -3,6 +3,12 @@ import upnpy
 import json
 import requests
 
+def enviar(j,peticion):
+    jsonToSend={"Peticion":peticion, "info":j}
+    jsonToSend=json.dumps(jsonToSend)
+    url="http://localhost/ExploracionIoT/controlador.php"
+    return requests.post(url, data=jsonToSend)
+
 #Añadimos el UPnP al dict
 DevicesDict={}
 UPnPDict={"UPnP": DevicesDict} 
@@ -52,15 +58,15 @@ for device in devices:
                 outputArgDict={"dataType":outputArg['data_type'],"allowedValueList":allowedValsString}
                 
 #preparado para envio:
-jsonToSend=json.dumps(UPnPDict)
 #guardamos en ./json/UPnP.json el json creado para hacer las pruebas de la aplicación
 with open("./jsons/UPnP.json","w") as f:
     json.dump(UPnPDict, f,)
 print("----------------------------------------------------------------------------\n\n")
 #especificamos método de envío, url, etc
-url="http://localhost/ExploracionIoT/controlador.php"
-response=requests.post(url, data=jsonToSend)
+response=enviar(UPnPDict,"UPnP")
 #mostramos el código de estado y la respuesta recibida
 print(response.status_code)
 print(response.text)
+
+
 
