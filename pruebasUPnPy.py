@@ -3,10 +3,11 @@ import upnpy
 import json
 import requests
 
+#Método para enviar peticiones al servidor web
 def enviar(j,peticion):
     jsonToSend={"Peticion":peticion, "info":j}
     jsonToSend=json.dumps(jsonToSend)
-    url="http://localhost/ExploracionIoT/controlador.php"
+    url="https://exploracion-iot.000webhostapp.com/controlador.php"
     return requests.post(url, data=jsonToSend)
 
 #Añadimos el UPnP al dict

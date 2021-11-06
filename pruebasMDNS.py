@@ -5,12 +5,13 @@ import time
 import json
 import requests
 
+#Método para enviar peticiones al servidor web
 def enviar(j,peticion):
     jsonToSend={"Peticion":peticion, "info":j}
     jsonToSend=json.dumps(jsonToSend)
-    url="http://localhost/ExploracionIoT/controlador.php"
+    url="https://exploracion-iot.000webhostapp.com/controlador.php"
     return requests.post(url, data=jsonToSend)
-
+#En esta clase se manejan los eventos del serviceBrowser
 class MyListener:
 
     def remove_service(self, zeroconf, type, name):
@@ -19,16 +20,13 @@ class MyListener:
     def add_service(self, zeroconf, type, name):
         info = zeroconf.get_service_info(type, name)
         if info:
-            #print("Service %s added, service info: %s" % (name, info))
             print("Type "+info.type)
             print("Service "+info.name+" port "+str(info.port))
-            #devuelve la IPv4 y la IPv6
             print("Weight "+str(info.weight))
             print("Priority "+str(info.priority))
             print("Properties ")
             properties=info.properties
             print(properties)
-            #prueba de acceso a atributos de las propiedades
             for prop in info.properties:
                 print(str(prop)+" : "+str(properties[prop]))
             print("server "+info.server)
@@ -39,17 +37,20 @@ class MyListener:
             print(info.parsed_addresses())
             print("\n")
             arrayServicios.append(info)
+    def update_service()
+            print("actualizado")
 
 arrayServicios=[]
 zeroconf = Zeroconf()
 listener = MyListener()
 print("browser")
-#El ServiceBrowser crea un hilo, el cual está 5 segundos buscando servicios, hasta que
+#El ServiceBrowser crea un hilo, el cual está 3 segundos buscando servicios, hasta que
 #el hilo principal detiene este hilo.
 browser = ServiceBrowser(zeroconf,list(ZeroconfServiceTypes.find(zc=zeroconf)),listener)
 time.sleep(3)
 browser.cancel()
 print(arrayServicios)
+#se ordenan los servicios por IPs en un diccionario
 serviciosPorIPs={}
 mDNSDict={"mDNS":serviciosPorIPs}
 for servicio in arrayServicios:
@@ -85,13 +86,6 @@ for servicio in arrayServicios:
         "interface_index":servicio.interface_index}
         serviciosPorIPs[servicio.parsed_addresses()[0]]={str(servicio.name):serv}
         
-print("dict:\n\n")
-print(serviciosPorIPs)
-for a in serviciosPorIPs:
-    print(" "+str(a))
-    for b in serviciosPorIPs[a]:
-        print("     "+str(b))
-
 #guardamos en ./json/UPnP.json el json creado para hacer las pruebas de la aplicación
 with open("./jsons/mDNS.json","w") as f:
     json.dump(mDNSDict, f)
@@ -104,12 +98,5 @@ print(response.status_code)
 print(response.text)
 
 
-#Falta la parte de enviar al json
-
-#Para cambiar las keys:
-#dictionary[new_key] = dictionary.pop(old_key)
-
-#Para pasar de dict a json:
-#r = json.dumps(r)
 
 
