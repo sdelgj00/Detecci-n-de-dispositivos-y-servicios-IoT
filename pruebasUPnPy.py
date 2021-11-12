@@ -18,11 +18,14 @@ upnp=upnpy.UPnP()
 devices=upnp.discover()
 #añadimos los dispositivos al dict
 for device in devices:
+    print("iii")
     deviceName=str(device)
     deviceName=deviceName.replace("Device <","")
     deviceName=deviceName.replace(">","")
     ServicesDict={}
-    DevicesDict[device.address[0]]={"Name":deviceName,"port":str(device.address[1]),"services":ServicesDict}
+    #Esto es por si hay varios programas UPnP, los cuales corren en puertos distintos
+    ipPuerto=str(device.address[0])+":"+str(device.address[1])
+    DevicesDict[ipPuerto]={"Name":deviceName,"port":str(device.address[1]),"services":ServicesDict}
     #añadimos los servicios de cada dispositivo al dict
     for service in device.get_services():
         #el proceso de hacer el split es para obtener el nombre y el id del servicio
