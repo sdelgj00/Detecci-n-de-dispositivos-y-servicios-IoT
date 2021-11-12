@@ -7,7 +7,8 @@ import requests
 def enviar(j,peticion):
     jsonToSend={"Peticion":peticion, "info":j}
     jsonToSend=json.dumps(jsonToSend)
-    url="https://exploracion-iot.000webhostapp.com/controlador.php"
+    #url="https://exploracion-iot.000webhostapp.com/controlador.php"
+    url="http://localhost/ExploracionIoT/controlador.php"
     return requests.post(url, data=jsonToSend)
 
 #Añadimos el UPnP al dict
@@ -21,7 +22,7 @@ for device in devices:
     deviceName=deviceName.replace("Device <","")
     deviceName=deviceName.replace(">","")
     ServicesDict={}
-    DevicesDict[deviceName]={"IP":device.address[0],"port":str(device.address[1]),"services":ServicesDict}
+    DevicesDict[device.address[0]]={"Name":deviceName,"port":str(device.address[1]),"services":ServicesDict}
     #añadimos los servicios de cada dispositivo al dict
     for service in device.get_services():
         #el proceso de hacer el split es para obtener el nombre y el id del servicio
