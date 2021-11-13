@@ -2,7 +2,7 @@ import upnpy
 
 import json
 import requests
-
+import datetime
 #Método para enviar peticiones al servidor web
 def enviar(j,peticion):
     jsonToSend={"Peticion":peticion, "info":j}
@@ -11,6 +11,52 @@ def enviar(j,peticion):
     url="http://localhost/ExploracionIoT/controlador.php"
     return requests.post(url, data=jsonToSend)
 
+def consultarVulnerabilidades(nombreServicio):
+    url="https://services.nvd.nist.gov/rest/json/cves/1.0/"
+    #Esto sirve para añadir espacios entre las palabras
+    p=""
+    nombreServicio=nombreServicio.replace("_"," ").replace("-"," ")
+    for l in  range(0,len(nombreServicio)):
+        if(l==len(nombreServicio)):
+            p=p+nombreServicio[l]
+        elif(l==0):
+            p=nombreServicio[l]
+        elif(nombreServicio[l].isupper()):
+            p=p+" "+nombreServicio[l]
+        else:
+            p=p+nombreServicio[l]
+    pSeparados=p.split(" ")
+    p=""
+    for l in pSeparados:
+        if(l.isupper()):
+            p=p+l
+        else:
+            p=p+" "+l
+    if(len(p)>=3):
+        #Selecciono las vulnerabilidades encontradas en los últimos 3 meses en los servicios:
+        fecha=datetime.datetime.now()
+        fechaAhora=fecha.strftime("%Y-%m-%dT%H:%M:%S:000 UTC-00:00")
+        fechaHace120dias=fecha-datetime.timedelta(days=120)
+        fechaHace120dias=fechaHace120dias.strftime("%Y-%m-%dT%H:%M:%S:000 UTC-00:00")
+        
+        jsonVulnerabil={"keyword":p, "resultsPerPage":40,"pubStartDate": fechaHace120dias,
+        "pubEndDate":fechaAhora}
+        
+        r=requests.get(url,params=jsonVulnerabil)
+        jsonVul=r.json()
+        #este if es para sí con la anterior búsqueda no ha encontrado vulnerabilidades
+        if(jsonVul["totalResults"]==0):
+            jsonVulnerabil={"keyword":p, "resultsPerPage":10}
+            r=requests.get(url,params=jsonVulnerabil)
+            return r.json()
+        else:
+            return r.json()
+    else:
+        #este else es para si no puede encontrar vulnerabilidades. En este caso, se crea un result vacío
+        fecha=datetime.datetime.now()
+        fechaAhora=fecha.strftime("%Y-%m-%dT%H:%M:%SZ")
+        return  {"resultsPerPage": 0, "startIndex": 0, "totalResults": 0, "result": {}};
+
 #Añadimos el UPnP al dict
 DevicesDict={}
 UPnPDict={"UPnP": DevicesDict} 
@@ -18,7 +64,8 @@ upnp=upnpy.UPnP()
 devices=upnp.discover()
 #añadimos los dispositivos al dict
 for device in devices:
-    print("iii")
+
+    #print(device.get_friendly_name())
     deviceName=str(device)
     deviceName=deviceName.replace("Device <","")
     deviceName=deviceName.replace(">","")
@@ -33,7 +80,8 @@ for device in devices:
         dividedService=serviceTXT.split()
         ActionsDict={}
         ServicesDict[dividedService[1].replace("(","").replace(")","")]={"ID":dividedService[2].replace("id=","").replace('"',"").replace(">",""),
-        "SCPD":service.scpd_url, "ControlUrl":service.control_url, "EventUrl":service.event_sub_url, "BaseUrl":service.base_url, "actions":ActionsDict}
+        "SCPD":service.scpd_url, "ControlUrl":service.control_url, "EventUrl":service.event_sub_url, "BaseUrl":service.base_url, "actions":ActionsDict,
+        "vulnerabilities":consultarVulnerabilidades(dividedService[1].replace("(","").replace(")",""))}
         actions=service.get_actions()
         #añadimos las acciones de cada servicio
         for action in actions:
