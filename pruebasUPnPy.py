@@ -114,6 +114,7 @@ for device in devices:
 #guardamos en ./json/UPnP.json el json creado para hacer las pruebas de la aplicación
 with open("./jsons/UPnP.json","w") as f:
     json.dump(UPnPDict, f,)
+print(UPnPDict)
 print("----------------------------------------------------------------------------\n\n")
 #especificamos método de envío, url, etc
 response=enviar(UPnPDict,"UPnP")

@@ -106,6 +106,7 @@ for servicio in arrayServicios:
 #guardamos en ./json/UPnP.json el json creado para hacer las pruebas de la aplicación
 with open("./jsons/mDNS.json","w") as f:
     json.dump(mDNSDict, f)
+print(mDNSDict)
 print("----------------------------------------------------------------------------\n\n")
 #especificamos método de envío, url, etc
 response=enviar(mDNSDict,"mDNS")
