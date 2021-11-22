@@ -20,7 +20,7 @@ def consultarVulnerabilidades(tipoServicio, nombreServicio):
     tipoServicioReducido=tipoServicio.split("_")[1].split("_")[0].split(".")[0].replace("-"," ")
     tipoServicioReducido=tipoServicioReducido.upper()
     
-    print(tipoServicioReducido)
+    #print(tipoServicioReducido)
 
     if(len(tipoServicioReducido)>=3 and tipoServicioReducido!='HTTP'):
         #Selecciono las vulnerabilidades encontradas en los últimos 3 meses en los servicios:
@@ -36,7 +36,7 @@ def consultarVulnerabilidades(tipoServicio, nombreServicio):
         jsonVul=r.json()
         #este if es para sí con la anterior búsqueda no ha encontrado vulnerabilidades
         if(jsonVul["totalResults"]==0):
-            print("Hay que generalizar las vulnerabilidades")
+            #print("Hay que generalizar las vulnerabilidades")
             jsonVulnerabil={"keyword":tipoServicioReducido, "resultsPerPage":10}
             r=requests.get(url,params=jsonVulnerabil)
             return r.json()
@@ -44,7 +44,7 @@ def consultarVulnerabilidades(tipoServicio, nombreServicio):
             return r.json()
     else:
         #este else es para si no puede encontrar vulnerabilidades. En este caso, se crea un result vacío
-        print("No ha sido posible encontrar vulnerabilidades")
+        #print("No ha sido posible encontrar vulnerabilidades")
         fecha=datetime.datetime.now()
         fechaAhora=fecha.strftime("%Y-%m-%dT%H:%M:%SZ")
         return  {"resultsPerPage": 0, "startIndex": 0, "totalResults": 0, "result": {}};
@@ -87,22 +87,22 @@ for servicio in arrayServicios:
         valor=valor[2:len(valor)-1]
         properties[clave]=valor
     for ips in serviciosPorIPs:
-        if ips==servicio.parsed_addresses()[0]:
+        ipsPort=str(servicio.parsed_addresses()[0])+":"+str(servicio.port)
+        if ips==ipsPort:
             anyadido=True
-            
+
             serv={"type":servicio.type,"port":servicio.port,
             "weight":servicio.weight,"priority":servicio.priority,"server":servicio.server,"properties":properties,
             "interface_index":servicio.interface_index,"vulnerabilities":consultarVulnerabilidades(servicio.type, servicio.name)}
-            ipsPort=str(ips)+":"+str(servicio.port)
             serviciosPorIPs[ipsPort][str(servicio.name)]=serv
-        break
+            break
     if not anyadido:
         serv={"type":servicio.type,"port":servicio.port,
         "weight":servicio.weight,"priority":servicio.priority,"server":servicio.server,"properties":properties,
         "interface_index":servicio.interface_index,"vulnerabilities":consultarVulnerabilidades(servicio.type,servicio.name)}
         ipsPort=str(servicio.parsed_addresses()[0])+":"+str(servicio.port)
         serviciosPorIPs[ipsPort]={str(servicio.name):serv}
-        
+
 #guardamos en ./json/UPnP.json el json creado para hacer las pruebas de la aplicación
 with open("./jsons/mDNS.json","w") as f:
     json.dump(mDNSDict, f)
