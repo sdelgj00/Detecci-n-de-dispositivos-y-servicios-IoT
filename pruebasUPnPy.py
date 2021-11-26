@@ -7,8 +7,8 @@ import datetime
 def enviar(j,peticion):
     jsonToSend={"Peticion":peticion, "info":j}
     jsonToSend=json.dumps(jsonToSend)
-    #url="https://exploracion-iot.000webhostapp.com/controlador.php"
-    url="http://localhost/ExploracionIoT/controlador.php"
+    url="https://exploracion-iot.000webhostapp.com/controlador.php"
+    #url="http://localhost/ExploracionIoT/controlador.php"
     return requests.post(url, data=jsonToSend)
 
 def consultarVulnerabilidades(nombreServicio):
