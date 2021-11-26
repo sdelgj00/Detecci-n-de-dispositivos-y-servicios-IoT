@@ -1,4 +1,4 @@
-from zeroconf import IPVersion, ServiceBrowser, Zeroconf, ZeroconfServiceTypes
+from zeroconf import IPVersion, ServiceBrowser, Zeroconf, ZeroconfServiceTypes, DNSQuestionType
 import time
 import datetime
 
@@ -11,8 +11,8 @@ import requests
 def enviar(j, peticion):
     jsonToSend = {"Peticion": peticion, "info": j}
     jsonToSend = json.dumps(jsonToSend)
-    url="https://exploracion-iot.000webhostapp.com/controlador.php"
-    #url = "http://localhost/ExploracionIoT/controlador.php"
+    #url="https://exploracion-iot.000webhostapp.com/controlador.php"
+    url = "http://localhost/ExploracionIoT/controlador.php"
     return requests.post(url, data=jsonToSend)
 
 
@@ -61,19 +61,21 @@ class MyListener:
         info = zeroconf.get_service_info(type, name)
         if info:
             arrayServicios.append(info)
+    def update_service(self):
+        print("servicio actualizado")
 
 
 
 arrayServicios = []
-zeroconf = Zeroconf(ip_version=IPVersion.V4Only)
+zeroconf = Zeroconf(ip_version=IPVersion.V4Only, unicast=False)
 listener = MyListener()
 print("browser")
 # El ServiceBrowser crea un hilo, el cual está 3 segundos buscando servicios, hasta que el hilo principal cierre el ServiceBrowser
 # el hilo principal detiene este hilo.
 print("lista servicios encontrados:")
-print(list(ZeroconfServiceTypes.find(zc=zeroconf)))
-browser = ServiceBrowser(zeroconf, list(ZeroconfServiceTypes.find(zc=zeroconf)), listener)
-time.sleep(3)
+serviciosEncontrados=list(ZeroconfServiceTypes.find(zc=zeroconf))
+browser = ServiceBrowser(zeroconf, serviciosEncontrados, listener, question_type=DNSQuestionType.QM)
+time.sleep(5)
 browser.cancel()
 print(arrayServicios)
 # se ordenan los servicios por IPs en un diccionario
