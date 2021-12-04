@@ -1,22 +1,37 @@
 from wsdiscovery.discovery import ThreadedWSDiscovery as WSDiscovery
 from wsdiscovery import QName, Scope
-
+import socket
 
 
 from wsdiscovery.publishing import ThreadedWSPublishing as WSPublishing
     # Define type, scope & address of service
 ttype1 = QName("http://www.onvif.org/ver10/device/wsdl", "Device")
+ttype2 = QName("http://www.onvif.org/ver10/device/wsdl", "Sium")
 scope1 = Scope("onvif://www.onvif.org/Model")
-xAddr1 = "localhost:8080/abc"
-
+xAddr1 = "https://192.168.1.101:8080/abc"
+xAddr2="https://192.168.1.101:69/abc"
+xAddr3="https://192.168.1.101:69/xd"
     # Publish the service
 wsp = WSPublishing()
 wsp.start()
-wsp.publishService(types=[ttype1], scopes=[scope1], xAddrs=[xAddr1])
+wsp.publishService(types=[ttype1, ttype2], scopes=[scope1], xAddrs=[xAddr1])
+
+wsp2 = WSPublishing()
+wsp2.start()
+wsp2.publishService(types=[ttype1], scopes=[scope1], xAddrs=[xAddr2])
+
+wsp3 = WSPublishing()
+wsp3.start()
+wsp3.publishService(types=[ttype1], scopes=[scope1], xAddrs=[xAddr3])
+
+def enviar(j,peticion):
+    jsonToSend={"Peticion":peticion, "info":j}
+    jsonToSend=json.dumps(jsonToSend)
+    url="https://exploracion-iot.000webhostapp.com/controlador.php"
+    #url="http://localhost/ExploracionIoT/controlador.php"
+    return requests.post(url, data=jsonToSend)
 
 
-
-    # Discover it (along with any other service out there)
 wsd = WSDiscovery()
 wsd.start()
 services = wsd.searchServices()
@@ -37,6 +52,41 @@ for service in services:
     print("XAddrs: "+str(service.getXAddrs()))
     print("----------------------------------")
 wsd.stop()
+
+
+serviciosPorIPs = {}
+WSDict={"WS-Discovery": serviciosPorIPs}
+for service in services:
+    anyadido=False
+    XAddrs=str(service.getXAddrs())
+    ipPuerto=XAddrs.split("/")[2]
+    print(ipPuerto)
+    scopes={}
+    i=0
+    for scope in service.getScopes():
+        scopeConcreto={}
+        scopeConcreto["MatchBy"]=scope.getMatchBy()
+        scopeConcreto["QuotedValue"]=scope.getQuotedValue()
+        scopeConcreto["Value"]=scope.getValue()
+        scopes[i]=scopeConcreto
+        i+=1
+    types={}
+    i=0
+    for type in service.getTypes():
+        types[i]=str(type)
+        i+=1
+    serv={"EPR":str(service.getEPR()),"InstanceId":str(service.getInstanceId()),"MessageNumber":str(service.getMessageNumber()),
+            "MetadataVersion":str(service.getMetadataVersion()),"Scopes":scopes,"Types":types,"XAddrs":str(service.getXAddrs())}  
+    for ipServicio in serviciosPorIPs:
+        if ipServicio==ipPuerto:
+            anyadido=True
+            serviciosPorIPs[ipPuerto][str(service.getXAddrs())] = serv
+    if not anyadido:
+        serviciosPorIPs[ipPuerto] = {str(service.getXAddrs()): serv}
+print(serviciosPorIPs)
+
+
+
 
 
 
