@@ -1,6 +1,7 @@
+import json
+import requests
 from wsdiscovery.discovery import ThreadedWSDiscovery as WSDiscovery
 from wsdiscovery import QName, Scope
-import socket
 
 
 from wsdiscovery.publishing import ThreadedWSPublishing as WSPublishing
@@ -8,13 +9,14 @@ from wsdiscovery.publishing import ThreadedWSPublishing as WSPublishing
 ttype1 = QName("http://www.onvif.org/ver10/device/wsdl", "Device")
 ttype2 = QName("http://www.onvif.org/ver10/device/wsdl", "Sium")
 scope1 = Scope("onvif://www.onvif.org/Model")
+scope2 = Scope("onvif://www.onvif.org/ModelJaja")
 xAddr1 = "https://192.168.1.101:8080/abc"
 xAddr2="https://192.168.1.101:69/abc"
 xAddr3="https://192.168.1.101:69/xd"
     # Publish the service
 wsp = WSPublishing()
 wsp.start()
-wsp.publishService(types=[ttype1, ttype2], scopes=[scope1], xAddrs=[xAddr1])
+wsp.publishService(types=[ttype1, ttype2], scopes=[scope1,scope2], xAddrs=[xAddr1])
 
 wsp2 = WSPublishing()
 wsp2.start()
@@ -30,7 +32,8 @@ def enviar(j,peticion):
     url="https://exploracion-iot.000webhostapp.com/controlador.php"
     #url="http://localhost/ExploracionIoT/controlador.php"
     return requests.post(url, data=jsonToSend)
-
+def consultarVulnerabilidades():
+    return []
 
 wsd = WSDiscovery()
 wsd.start()
@@ -75,15 +78,23 @@ for service in services:
     for type in service.getTypes():
         types[i]=str(type)
         i+=1
+    XAddrs=str(service.getXAddrs())[2:-2]
     serv={"EPR":str(service.getEPR()),"InstanceId":str(service.getInstanceId()),"MessageNumber":str(service.getMessageNumber()),
-            "MetadataVersion":str(service.getMetadataVersion()),"Scopes":scopes,"Types":types,"XAddrs":str(service.getXAddrs())}  
+            "MetadataVersion":str(service.getMetadataVersion()),"Scopes":scopes,"Types":types,"XAddrs":XAddrs, "Vulnerabilities":consultarVulnerabilidades()}
     for ipServicio in serviciosPorIPs:
         if ipServicio==ipPuerto:
             anyadido=True
-            serviciosPorIPs[ipPuerto][str(service.getXAddrs())] = serv
+            serviciosPorIPs[ipPuerto][XAddrs] = serv
     if not anyadido:
-        serviciosPorIPs[ipPuerto] = {str(service.getXAddrs()): serv}
-print(serviciosPorIPs)
+        serviciosPorIPs[ipPuerto] = {XAddrs: serv}
+print(WSDict)
+print("----------------------------------------------------------------------------\n\n")
+# especificamos método de envío, url, etc
+response = enviar(WSDict, "WS-Discovery")
+
+# mostramos el código de estado y la respuesta recibida
+print(response.status_code)
+print(response.text)
 
 
 
