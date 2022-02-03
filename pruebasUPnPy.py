@@ -7,8 +7,9 @@ import datetime
 def enviar(j,peticion):
     jsonToSend={"Peticion":peticion, "info":j}
     jsonToSend=json.dumps(jsonToSend)
-    url="https://exploracion-iot.000webhostapp.com/controlador.php"
-    #url="http://localhost/ExploracionIoT/controlador.php"
+    jsonToSend=jsonToSend.replace("'","''");
+    #url="https://exploracion-iot.000webhostapp.com/controlador.php"
+    url="http://localhost/ExploracionIoT/controlador.php"
     return requests.post(url, data=jsonToSend)
 
 def consultarVulnerabilidades(nombreServicio):
@@ -55,7 +56,7 @@ def consultarVulnerabilidades(nombreServicio):
         #este else es para si no puede encontrar vulnerabilidades. En este caso, se crea un result vacío
         fecha=datetime.datetime.now()
         fechaAhora=fecha.strftime("%Y-%m-%dT%H:%M:%SZ")
-        return  {"resultsPerPage": 0, "startIndex": 0, "totalResults": 0, "result": {}};
+        return  {"resultsPerPage": 0, "startIndex": 0, "totalResults": 0, "result": {}}
 
 #Añadimos el UPnP al dict
 DevicesDict={}
