@@ -1,11 +1,21 @@
 import upnpy
 import requests
 import datetime
-
+import Vulnerabilidades
 
 
 class UPnP:
-    def consultarVulnerabilidades(nombreServicio):
+    vul = None
+
+    def obtenerCPE(self,IP):
+        for i in self.Dispositivos['Nmap']:
+            if i == IP:
+                try:
+                    return self.Dispositivos['Nmap'][IP]['osmatch'][0]['osclass'][0]['cpe'][0]
+                except:
+                    return ''
+        return ''
+    def consultarVulnerabilidades(self,nombreServicio, ip):
         url = "https://services.nvd.nist.gov/rest/json/cves/1.0/"
         # Esto sirve para añadir espacios entre las palabras
         p = ""
@@ -26,32 +36,9 @@ class UPnP:
                 p = p + l
             else:
                 p = p + " " + l
-        if (len(p) >= 3):
-            # Selecciono las vulnerabilidades encontradas en los últimos 3 meses en los servicios:
-            fecha = datetime.datetime.now()
-            fechaAhora = fecha.strftime("%Y-%m-%dT%H:%M:%S:000 UTC-00:00")
-            fechaHace120dias = fecha - datetime.timedelta(days=120)
-            fechaHace120dias = fechaHace120dias.strftime("%Y-%m-%dT%H:%M:%S:000 UTC-00:00")
-
-            jsonVulnerabil = {"keyword": p, "resultsPerPage": 40, "pubStartDate": fechaHace120dias,
-                              "pubEndDate": fechaAhora}
-
-            r = requests.get(url, params=jsonVulnerabil)
-            jsonVul = r.json()
-            # este if es para sí con la anterior búsqueda no ha encontrado vulnerabilidades
-            if (jsonVul["totalResults"] == 0):
-                jsonVulnerabil = {"keyword": p, "resultsPerPage": 10}
-                r = requests.get(url, params=jsonVulnerabil)
-                return r.json()
-            else:
-                return r.json()
-        else:
-            # este else es para si no puede encontrar vulnerabilidades. En este caso, se crea un result vacío
-            fecha = datetime.datetime.now()
-            fechaAhora = fecha.strftime("%Y-%m-%dT%H:%M:%SZ")
-            return {"resultsPerPage": 0, "startIndex": 0, "totalResults": 0, "result": {}}
-
-    def obtenerServicios(self):
+        return self.vul.consultarVulnerabilidades(p, ip)
+    def obtenerServicios(self, dispositivos):
+        self.vul=Vulnerabilidades.Vulnerabilidades(dispositivos)
         # Añadimos el UPnP al dict
         DevicesDict = {}
         UPnPDict = {"UPnP": DevicesDict}
@@ -78,7 +65,7 @@ class UPnP:
                     "ID": dividedService[2].replace("id=", "").replace('"', "").replace(">", ""),
                     "SCPD": service.scpd_url, "ControlUrl": service.control_url, "EventUrl": service.event_sub_url,
                     "BaseUrl": service.base_url, "actions": ActionsDict,
-                    "vulnerabilities": self.consultarVulnerabilidades(dividedService[1].replace("(", "").replace(")", ""))}
+                    "vulnerabilities": self.consultarVulnerabilidades(dividedService[1].replace("(", "").replace(")", ""),str(device.address[0]))}
                 actions = service.get_actions()
                 # añadimos las acciones de cada servicio
                 for action in actions:
