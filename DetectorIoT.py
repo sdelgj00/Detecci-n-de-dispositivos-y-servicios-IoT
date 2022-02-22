@@ -4,7 +4,8 @@ from modulos.UPnP import UPnP
 from modulos.Nmap import Nmap
 from modulos.mDNS import MDNS
 from modulos.WSDiscovery import WSDiscovery
-from Constantes import Constantes
+import Constantes
+import argparse
 
 Dispositivos={}
 def guardarEnArchivo(dir, dict):
@@ -19,12 +20,26 @@ def enviar(j, peticion):
     # url="https://exploracion-iot.000webhostapp.com/controlador.php"
     url = "http://localhost/ExploracionIoT/controlador.php"
     return requests.post(url, data=jsonToSend)
+def explorarYGuardar(archivo,dict):
+    guardarEnArchivo(archivo, dict)
+    print()
+    print(dict)
+    print("------------------------------------------------------------------")
 
 if __name__ == '__main__':
+    parser=argparse.ArgumentParser(description='Explorador de red local (IoT)')
+    parser.add_argument("--IP",type=str, default=None, help="IP de exploración. Ejemplo: 192.168.8.0/24")
+    parser.add_argument("--EL",type=str, default=None, help="Nivel de exploración: F más bajo y A más alto")
+    parser.add_argument("--v", help="(Opcional) Aumenta la información mostrada por el programa",action="store_true")
+
+    args=parser.parse_args()
+    if not args.IP or not args.EL:
+        print(parser.print_help())
+        exit(-1)
     """hay que pasar la direccion de búsqueda como parámetro(192.168.1.0/24), además del tipo de búsqueda al 
     método obtener dispositivos del objeto nmap"""
-    cons=Constantes()
-    print(cons.ExploradorIoT)
+    print(Constantes.ExploradorIoT)
+    print("------------------------------------------------------------------")
     nmap=Nmap()
     upnp=UPnP()
     mdns=MDNS()
@@ -33,36 +48,61 @@ if __name__ == '__main__':
         print("hola")
     except Exception as a:
         print(a)"""
+
     #Exploracion con nmap
-    Dispositivos=nmap.obtenerDispositivos("10.130.16.0/21","A")
-    guardarEnArchivo("./jsons/Nmap.json", Dispositivos)
-    print()
-    print(Dispositivos)
-    print("------------------------------------")
+    try:
+        print(Constantes.tituloExploracion("nmap"))
+        Dispositivos=nmap.obtenerDispositivos(args.IP,args.EL)
+        explorarYGuardar("./jsons/Nmap.json",Dispositivos)
+    except Exception as a:
+        print("Problemas al realizar la exploración nmap: "+args.IP+" "+args.EL)
+        print()
+        print(a)
+        exit(-1)
 
     #Exploracion UPnP
-    ServiciosUPnP=upnp.obtenerServicios(Dispositivos)
-    guardarEnArchivo("./jsons/UPnP.json",ServiciosUPnP)
-    print(ServiciosUPnP)
-    print("------------------------------------")
+    try:
+        print(Constantes.tituloExploracion("upnp"))
+        ServiciosUPnP=upnp.obtenerServicios(Dispositivos)
+        explorarYGuardar("./jsons/UPnP.json",ServiciosUPnP)
+    except Exception as a:
+        print("Problemas al realizar la exploración UPnP")
+        print()
+        print(a)
+        exit(-1)
 
     #Exploracion mDNS
-    ServiciosMDNS=mdns.obtenerServicios(Dispositivos)
-    guardarEnArchivo("./jsons/mDNS.json",ServiciosMDNS)
-    print(ServiciosMDNS)
-    print("------------------------------------")
+    try:
+        print(Constantes.tituloExploracion("mdns"))
+        ServiciosMDNS=mdns.obtenerServicios(Dispositivos)
+        explorarYGuardar("./jsons/mDNS.json",ServiciosMDNS)
+    except Exception as a:
+        print("Problemas al realizar la exploración mDNS")
+        print()
+        print(a)
+        exit(-1)
 
     #Exploracion WS-Discovery
-    ServiciosWSDiscovery=wsdiscovery.obtenerServicios()
-    guardarEnArchivo("./jsons/WS-Discovery.json",ServiciosWSDiscovery)
-    print(ServiciosWSDiscovery)
-    print("------------------------------------")
+    try:
+        print(Constantes.tituloExploracion("wsdiscovery"))
+        ServiciosWSDiscovery=wsdiscovery.obtenerServicios()
+        explorarYGuardar("./jsons/WS-Discovery.json",ServiciosWSDiscovery)
+    except Exception as a:
+        print("Problemas al realizar la exploración WS-Discovery")
+        print()
+        print(a)
+        exit(-1)
+    print("------------------------------------------------------------------")
+    print("------------------------------------------------------------------")
+    print("------------------------------------------------------------------")
 
     #Union de toda la informacion para enviarla al servidor
     DictEnvio={"Nmap":Dispositivos,"UPnP":ServiciosUPnP,"mDNS":ServiciosMDNS,"WS-Discovery":ServiciosWSDiscovery}
-    print(DictEnvio)
+    if args.v:
+        print(DictEnvio)
     cositas=enviar(DictEnvio, "All")
-    print(cositas.text)
+    if args.v:
+        print(cositas.text)
 
 
 
