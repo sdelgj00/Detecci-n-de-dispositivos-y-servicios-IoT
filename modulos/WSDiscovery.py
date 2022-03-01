@@ -1,5 +1,6 @@
 
 from wsdiscovery.discovery import ThreadedWSDiscovery as WSD
+import logging
 
 class WSDiscovery:
 
