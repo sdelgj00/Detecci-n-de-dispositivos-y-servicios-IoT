@@ -89,7 +89,7 @@ if __name__ == '__main__':
     #Exploracion WS-Discovery
     try:
         print(Constantes.tituloExploracion("wsdiscovery"))
-        ServiciosWSDiscovery=wsdiscovery.obtenerServicios()
+        ServiciosWSDiscovery=wsdiscovery.obtenerServicios(Dispositivos)
         explorarYGuardar("./jsons/WS-Discovery.json",ServiciosWSDiscovery)
     except Exception as a:
         logError("Problemas al realizar la exploración WS-Discovery",format_exc())

@@ -1,12 +1,20 @@
-
 from wsdiscovery.discovery import ThreadedWSDiscovery as WSD
-import logging
+import Vulnerabilidades
 
 class WSDiscovery:
+    vul = None
 
-    def consultarVulnerabilidades(self):
-        return []
-    def obtenerServicios(self):
+    def consultarVulnerabilidades(self, XAddrs):
+        ip=XAddrs.split("/")[2].split(":")[0]
+
+        for i in range(3):
+            pos = XAddrs.find("/")
+            XAddrs = XAddrs[pos + 1:]
+        XAddrs = XAddrs.replace("_", " ").replace("/", " ");
+        return self.vul.consultarVulnerabilidades(XAddrs,ip)
+    def obtenerServicios(self, dispositivos):
+        self.vul=Vulnerabilidades.Vulnerabilidades(dispositivos)
+
         #Se crea un objeto ThreadedWSDiscovery, y se comienza la búsqueda de servicios
         wsd = WSD()
         wsd.start()
@@ -34,7 +42,7 @@ class WSDiscovery:
                 i+=1
             XAddrs=str(service.getXAddrs())[2:-2]
             serv={"EPR":str(service.getEPR()),"InstanceId":str(service.getInstanceId()),"MessageNumber":str(service.getMessageNumber()),
-                    "MetadataVersion":str(service.getMetadataVersion()),"Scopes":scopes,"Types":types,"XAddrs":XAddrs, "Vulnerabilities":self.consultarVulnerabilidades()}
+                    "MetadataVersion":str(service.getMetadataVersion()),"Scopes":scopes,"Types":types,"XAddrs":XAddrs, "Vulnerabilities":self.consultarVulnerabilidades(XAddrs)}
             for ipServicio in serviciosPorIPs:
                 if ipServicio==ipPuerto:
                     anyadido=True
