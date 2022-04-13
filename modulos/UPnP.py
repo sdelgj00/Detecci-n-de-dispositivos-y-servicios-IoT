@@ -2,7 +2,7 @@ import upnpy
 import requests
 import datetime
 import Vulnerabilidades
-
+import logging
 
 class UPnP:
     vul = None
@@ -45,6 +45,17 @@ class UPnP:
         upnp = upnpy.UPnP()
         devices = upnp.discover()
         # añadimos los dispositivos al dict
+
+        #log servicios encontrados
+        serviciosLog = "servicios UPnP encontrados:\n"
+        for device in devices:
+            serviciosLog += str(device.address[0]) + ":" + str(device.address[1])+":\n"
+            for service in device.get_services():
+                serviceTXT = str(service)
+                dividedService = serviceTXT.split()
+                serviciosLog += "\t"+dividedService[1].replace("(", "").replace(")", "")+"\n"
+        logging.info(serviciosLog)
+
         for device in devices:
 
             # print(device.get_friendly_name())

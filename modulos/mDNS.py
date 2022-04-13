@@ -1,6 +1,7 @@
 from zeroconf import IPVersion, ServiceBrowser, Zeroconf, ZeroconfServiceTypes, DNSQuestionType
 import time
 import Vulnerabilidades
+import logging
 
 arrayServicios = []
 update=0
@@ -51,6 +52,13 @@ class MDNS:
         # se ordenan los servicios por IPs en un diccionario
         serviciosPorIPs = {}
         mDNSDict = {"mDNS": serviciosPorIPs}
+
+        #log servicios encontrados
+        serviciosLog="servicios mDNS encontrados:\n"
+        for servicio in arrayServicios:
+            serviciosLog+=servicio.type+"\n"
+        logging.info(serviciosLog)
+
         for servicio in arrayServicios:
             anyadido = False
             properties = {}

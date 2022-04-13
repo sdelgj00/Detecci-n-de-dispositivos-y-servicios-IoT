@@ -1,5 +1,6 @@
 from wsdiscovery.discovery import ThreadedWSDiscovery as WSD
 import Vulnerabilidades
+import logging
 
 class WSDiscovery:
     vul = None
@@ -22,6 +23,13 @@ class WSDiscovery:
         #Se ordenan los servicios por IPs
         serviciosPorIPs = {}
         WSDict={"WS-Discovery": serviciosPorIPs}
+
+        #log servicios encontrados
+        serviciosLog = "servicios WS-DISCOVERY encontrados:\n"
+        for service in services:
+            serviciosLog += service.getXAddrs() + "\n"
+        logging.info(serviciosLog)
+
         for service in services:
             anyadido=False
             XAddrs=str(service.getXAddrs())

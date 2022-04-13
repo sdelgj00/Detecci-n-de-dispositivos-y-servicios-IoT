@@ -1,5 +1,7 @@
 import requests
 import datetime
+import logging
+
 class Vulnerabilidades:
     dispositivos={}
     url = "https://services.nvd.nist.gov/rest/json/cves/1.0/"
@@ -32,6 +34,8 @@ class Vulnerabilidades:
             i['CVE_url']='https://nvd.nist.gov/vuln/detail/'+i['cve']['CVE_data_meta']['ID']
         return req
     def consultarVulnerabilidades(self,servicio, IP):
+        #log vulnerabilidades key de búsqueda y IP (
+        logging.info("Vulnerabilidades IP: "+IP+", servicio: "+servicio)
 
         if (len(servicio) >= 3):
             # Selecciono las vulnerabilidades encontradas en los últimos 3 meses en los servicios:
@@ -42,7 +46,7 @@ class Vulnerabilidades:
 
             jsonVulnerabil = {"apiKey":"cbc2a11a-7326-4b43-94c1-a9af08db23c2","keyword": servicio, "resultsPerPage": 40, "pubStartDate": fechaHace120dias,
                               "pubEndDate": fechaAhora, "cpeMatchString":self.obtenerCPE(IP)}
-            print(jsonVulnerabil)
+            #print(jsonVulnerabil)
             r = requests.get(self.url, params=jsonVulnerabil)
             r=r.json()
             r=self.anyadirCWE(r)
@@ -50,7 +54,7 @@ class Vulnerabilidades:
             jsonVul = r
             # este if es para sí con la anterior búsqueda no ha encontrado vulnerabilidades
             if (jsonVul["totalResults"] == 0):
-                jsonVulnerabil = {"apiKey":"cbc2a11a-7326-4b43-94c1-a9af08db23c2", "keyword": servicio, "resultsPerPage": 10, "cpeMatchString":self.obtenerCPE(IP)}
+                jsonVulnerabil = {"apiKey":"cbc2a11a-7326-4b43-94c1-a9af08db23c2", "keyword": servicio, "resultsPerPage": 10}#, "cpeMatchString":self.obtenerCPE(IP)
                 r = requests.get(self.url, params=jsonVulnerabil)
                 r = r.json()
 
