@@ -19,15 +19,19 @@ class Vulnerabilidades:
         return ''
     def anyadirCWE(self, req):
         for i in req['result']['CVE_Items']:
-            if i['cve']['problemtype']['problemtype_data'][0]['description'][0]['value']!= '':
-                resp = requests.get(
-                    self.urlCWE+i['cve']['problemtype']['problemtype_data'][0]['description'][0]['value'],
-                    auth=("sully99", "3@b4EY@QxavktEu")
-                )
-                resp=resp.json()
-                i['CWE_desc']=resp['name']
-                cweRed=str(i['cve']['problemtype']['problemtype_data'][0]['description'][0]['value']).replace('CWE-','')
-                i['CWE_url']='https://cwe.mitre.org/data/definitions/'+cweRed+'.html'
+            try:
+                if i['cve']['problemtype']['problemtype_data'][0]['description'][0]['value']!= '':
+                    resp = requests.get(
+                        self.urlCWE+i['cve']['problemtype']['problemtype_data'][0]['description'][0]['value'],
+                        auth=("sully99", "3@b4EY@QxavktEu")
+                    )
+                    resp=resp.json()
+                    i['CWE_desc']=resp['name']
+                    cweRed=str(i['cve']['problemtype']['problemtype_data'][0]['description'][0]['value']).replace('CWE-','')
+                    i['CWE_url']='https://cwe.mitre.org/data/definitions/'+cweRed+'.html'
+            except Exception as a:
+                i['CWE_desc'] = ''
+                i['CWE_url'] = ''
         return req
     def anyadirURL(self, req):
         for i in req['result']['CVE_Items']:

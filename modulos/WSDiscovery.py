@@ -27,7 +27,7 @@ class WSDiscovery:
         #log servicios encontrados
         serviciosLog = "servicios WS-DISCOVERY encontrados:\n"
         for service in services:
-            serviciosLog += service.getXAddrs() + "\n"
+            serviciosLog += str(service.getXAddrs()) + "\n"
         logging.info(serviciosLog)
 
         for service in services:
